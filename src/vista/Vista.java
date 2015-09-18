@@ -20,11 +20,14 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
+import ambere.RelojInterface;
+import ambere.Reloj;
 
 public class Vista extends javax.swing.JFrame implements
         ActionListener,
         MouseListener,
-        KeyListener {
+        KeyListener,
+        RelojInterface {
 
     static boolean pausa = false;
     static boolean play = false;
@@ -32,8 +35,10 @@ public class Vista extends javax.swing.JFrame implements
     private Collection<ArchivoVo> archivosColl;
     private Collection<ArchivoVo> encontradosColl;
     private ArchivoVo seleccionado;
+    public static Vista INSTANCIA = null;
 
     public Vista() {
+        INSTANCIA = this;
         initComponents();
         this.setLocationRelativeTo(null);
         this.btnAgregar.addActionListener(this);
@@ -92,9 +97,9 @@ public class Vista extends javax.swing.JFrame implements
             hasta = this.encontradosColl.size();
         }
         int min = 1, max = hasta;
-        
+
         Random rand = new Random();
-        
+
         int randomNum = rand.nextInt((max - min) + 1) + min;
 
         return randomNum;
@@ -109,31 +114,40 @@ public class Vista extends javax.swing.JFrame implements
                 Thread.sleep(500);
                 pausa = false;
                 play = true;
+
                 try {
                     FileInputStream fis = new FileInputStream(vo.getCompleto());
                     Player pl = new Player(fis);
-
+                    
                     new Thread() {
                         @Override
                         public void run() {
+
+                            Reloj rlj = new Reloj(INSTANCIA);
+                            rlj.empezar();
+
                             try {
+                                
                                 while (play) {
-                                    //if (!pausa) {
-                                    lblTiempo.setText(Integer.toString(pl.getPosition()));
+
                                     if (!pl.play(1)) {
                                         break;
                                     }
-                                    //}
+
                                 }
+                                rlj.parar();
                                 play = false;
                                 if (pl.isComplete()) {
                                     irSiguiente();
                                 }
+
                             } catch (JavaLayerException e) {
                                 System.out.println(e.getMessage());
                             }
+
                         }
                     }.start();
+                    
                 } catch (JavaLayerException e1) {
                     JOptionPane.showMessageDialog(this, "No es un fichero de audio");
                 } catch (FileNotFoundException ex) {
@@ -610,5 +624,10 @@ public class Vista extends javax.swing.JFrame implements
         if (e.getSource() == this.txtTarge) {
             this.buscar();
         }
+    }
+
+    @Override
+    public void showTime(String hms) {
+        this.lblTiempo.setText(hms);
     }
 }
