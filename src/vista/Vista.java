@@ -1,5 +1,6 @@
-package joeplayer;
+package vista;
 
+import ambere.ArchivoVo;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -11,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
@@ -27,8 +29,9 @@ public class Vista extends javax.swing.JFrame implements
     static boolean pausa = false;
     static boolean play = false;
     static int cant = 0;
-    private Collection<ArchivosVo> archivosColl;
-    private Collection<ArchivosVo> encontradosColl;
+    private Collection<ArchivoVo> archivosColl;
+    private Collection<ArchivoVo> encontradosColl;
+    private ArchivoVo seleccionado;
 
     public Vista() {
         initComponents();
@@ -38,67 +41,124 @@ public class Vista extends javax.swing.JFrame implements
         this.btnPause.addActionListener(this);
         this.btnStop.addActionListener(this);
         this.btnPlay.addActionListener(this);
+        this.btnSiguiente.addActionListener(this);
+        this.btnAnterior.addActionListener(this);
         this.listLista.addMouseListener(this);
         this.txtTarge.addKeyListener(this);
 
         DefaultListModel dlm = new DefaultListModel();
+
         this.listLista.setModel(dlm);
 
         this.archivosColl = new ArrayList<>();
         this.encontradosColl = new ArrayList<>();
     }
 
-    private void reproducir(String archivo) {
+    private void irSiguiente() {
+        int actual;
+        if (this.rdoOrdenada.isSelected()) {
+            actual = this.seleccionado.getId();
+            actual++;
+        } else {
+            actual = this.getRandon();
+        }
 
-        try {
-            Thread.sleep(500);
-            pausa = false;
-            play = true;
+        ArchivoVo vo = this.getArchivo(actual);
+        if (vo != null) {
+            this.seleccionado = vo;
+        } else {
+            this.seleccionado = this.getArchivo(1);
+        }
+        play = false;
+        this.reproducir(this.seleccionado);
+    }
+
+    private void irAnterior() {
+        int actual = this.seleccionado.getId();
+        actual--;
+        ArchivoVo vo = this.getArchivo(actual);
+        if (vo != null) {
+            this.seleccionado = vo;
+        } else {
+            this.seleccionado = this.getArchivo(this.listLista.getModel().getSize());
+        }
+        play = false;
+        this.reproducir(this.seleccionado);
+    }
+
+    private int getRandon() {
+        int hasta = this.archivosColl.size();
+        if (this.encontradosColl.size() > 0) {
+            hasta = this.encontradosColl.size();
+        }
+        int min = 1, max = hasta;
+        
+        Random rand = new Random();
+        
+        int randomNum = rand.nextInt((max - min) + 1) + min;
+
+        return randomNum;
+    }
+
+    private void reproducir(ArchivoVo vo) {
+        if (vo != null) {
+
+            this.lblTitulo.setText(vo.getId() + "- " + vo.getNombre().trim());
+            this.listLista.setSelectedIndex((vo.getId() - 1));
             try {
-                FileInputStream fis = new FileInputStream(archivo);
-                Player pl = new Player(fis);
-                new Thread() {
-                    @Override
-                    public void run() {
-                        try {
-                            while (play) {
-                                if (!pausa) {
+                Thread.sleep(500);
+                pausa = false;
+                play = true;
+                try {
+                    FileInputStream fis = new FileInputStream(vo.getCompleto());
+                    Player pl = new Player(fis);
+
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            try {
+                                while (play) {
+                                    //if (!pausa) {
                                     lblTiempo.setText(Integer.toString(pl.getPosition()));
                                     if (!pl.play(1)) {
                                         break;
                                     }
+                                    //}
                                 }
+                                play = false;
+                                if (pl.isComplete()) {
+                                    irSiguiente();
+                                }
+                            } catch (JavaLayerException e) {
+                                System.out.println(e.getMessage());
                             }
-                            play = false;
-                        } catch (JavaLayerException e) {
-                            System.out.println(e.getMessage());
                         }
-                    }
-                }.start();
-            } catch (JavaLayerException e1) {
-                JOptionPane.showMessageDialog(this, "No es un fichero de audio");
-            } catch (FileNotFoundException ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage());
+                    }.start();
+                } catch (JavaLayerException e1) {
+                    JOptionPane.showMessageDialog(this, "No es un fichero de audio");
+                } catch (FileNotFoundException ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage());
+                }
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Vista.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Vista.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     private void buscar() {
         this.encontradosColl.clear();
-        System.out.println("cantidad de archivos " + archivosColl.size() + " can encon " + encontradosColl.size());
+
         int x = 0;
-        String targe = this.txtTarge.getText().trim();
+        String targe = this.txtTarge.getText().toLowerCase().trim();
 
         if (targe.isEmpty()) {
             this.armarLista(archivosColl);
         } else {
-            for (ArchivosVo vox : archivosColl) {
-                System.out.println("comparando " + vox.getNombre() + " con " + targe);
-                if (vox.getNombre().contains(targe)) {
+            for (ArchivoVo vox : archivosColl) {
+
+                if (vox.getNombre().toLowerCase().contains(targe)) {
                     x++;
-                    this.encontradosColl.add(new ArchivosVo(
+                    this.encontradosColl.add(new ArchivoVo(
                             x,
                             vox.getNombre(),
                             vox.getDireccion(),
@@ -108,14 +168,13 @@ public class Vista extends javax.swing.JFrame implements
             }
             this.armarLista(encontradosColl);
         }
-        
+
     }
 
     private void selDir() {
         cant = 0;
         DefaultListModel dlm = new DefaultListModel();
         this.listLista.setModel(dlm);
-
         String archivo = "", archivoFull = "";
         JFileChooser c = new JFileChooser(".");
         c.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -125,8 +184,8 @@ public class Vista extends javax.swing.JFrame implements
         if (rVal == JFileChooser.APPROVE_OPTION) {
             archivo = c.getSelectedFile().getName();
             archivoFull = c.getSelectedFile().getPath();
-            System.out.println("archivo: " + archivo);
-            System.out.println("full: " + archivoFull);
+            //System.out.println("archivo: " + archivo);
+            this.lblDirectorio.setText(archivoFull);
             listarArchivos(archivoFull);
         }
     }
@@ -136,10 +195,10 @@ public class Vista extends javax.swing.JFrame implements
         this.armarLista(archivosColl);
     }
 
-    private void armarLista(Collection<ArchivosVo> coll) {
+    private void armarLista(Collection<ArchivoVo> coll) {
         DefaultListModel dlm = new DefaultListModel();
 
-        for (ArchivosVo vo : coll) {
+        for (ArchivoVo vo : coll) {
             dlm.addElement(vo.getId() + "- " + vo.getNombre());
         }
 
@@ -166,7 +225,7 @@ public class Vista extends javax.swing.JFrame implements
                     this.armarColl(full);
                 } else {
                     cant++;
-                    this.archivosColl.add(new ArchivosVo(cant, ar, directorio, full));
+                    this.archivosColl.add(new ArchivoVo(cant, ar, directorio, full));
                 }
             }
         }
@@ -176,13 +235,18 @@ public class Vista extends javax.swing.JFrame implements
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        bgReproduccion = new javax.swing.ButtonGroup();
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         lblTitulo = new javax.swing.JLabel();
+        lblTiempo = new javax.swing.JLabel();
         btnPlay = new javax.swing.JButton();
         btnPause = new javax.swing.JButton();
-        lblTiempo = new javax.swing.JLabel();
         btnStop = new javax.swing.JButton();
+        btnAnterior = new javax.swing.JButton();
+        btnSiguiente = new javax.swing.JButton();
+        rdoRandon = new javax.swing.JRadioButton();
+        rdoOrdenada = new javax.swing.JRadioButton();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         listLista = new javax.swing.JList();
@@ -190,23 +254,42 @@ public class Vista extends javax.swing.JFrame implements
         btnEliminar = new javax.swing.JButton();
         lblCantidad = new javax.swing.JLabel();
         txtTarge = new javax.swing.JTextField();
+        lblDirectorio = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("JoePlayer");
+        setTitle("Amberé Player");
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         jPanel2.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
+        lblTitulo.setFont(new java.awt.Font("DejaVu Sans", 1, 14)); // NOI18N
         lblTitulo.setText("Título");
 
-        btnPlay.setText(">");
-
-        btnPause.setText("||");
-
+        lblTiempo.setFont(new java.awt.Font("DejaVu Sans", 1, 14)); // NOI18N
         lblTiempo.setText("Tiempo");
 
-        btnStop.setText("X");
+        btnPlay.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/control_play_blue.png"))); // NOI18N
+
+        btnPause.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/control_pause_blue.png"))); // NOI18N
+        btnPause.setToolTipText("");
+
+        btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/control_stop_blue.png"))); // NOI18N
+
+        btnAnterior.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/control_rewind_blue.png"))); // NOI18N
+        btnAnterior.setToolTipText("");
+
+        btnSiguiente.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/control_fastforward_blue.png"))); // NOI18N
+
+        bgReproduccion.add(rdoRandon);
+        rdoRandon.setMnemonic('r');
+        rdoRandon.setText("Randon");
+
+        bgReproduccion.add(rdoOrdenada);
+        rdoOrdenada.setMnemonic('o');
+        rdoOrdenada.setSelected(true);
+        rdoOrdenada.setText("Ordenada");
+        rdoOrdenada.setToolTipText("");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -217,12 +300,19 @@ public class Vista extends javax.swing.JFrame implements
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblTitulo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(btnPlay)
+                        .addComponent(btnPlay, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnPause)
+                        .addComponent(btnPause, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnStop)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addComponent(btnStop, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnAnterior, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnSiguiente, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 322, Short.MAX_VALUE)
+                        .addComponent(rdoOrdenada)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(rdoRandon))
                     .addComponent(lblTiempo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -231,26 +321,40 @@ public class Vista extends javax.swing.JFrame implements
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(lblTitulo)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lblTiempo)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 25, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnPlay)
-                    .addComponent(btnPause)
-                    .addComponent(btnStop))
-                .addContainerGap())
+                .addGap(12, 12, 12)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(btnPlay)
+                        .addComponent(btnPause)
+                        .addComponent(btnStop)
+                        .addComponent(btnAnterior)
+                        .addComponent(btnSiguiente))
+                    .addComponent(rdoOrdenada, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(rdoRandon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(12, Short.MAX_VALUE))
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
+        listLista.setFont(new java.awt.Font("DejaVu Sans", 0, 14)); // NOI18N
         jScrollPane1.setViewportView(listLista);
 
-        btnAgregar.setText("+");
+        btnAgregar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/add.png"))); // NOI18N
 
-        btnEliminar.setText("-");
+        btnEliminar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/delete.png"))); // NOI18N
+        btnEliminar.setToolTipText("");
+        btnEliminar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEliminarActionPerformed(evt);
+            }
+        });
 
         lblCantidad.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblCantidad.setText("0");
+
+        lblDirectorio.setText("Directorio");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -259,28 +363,33 @@ public class Vista extends javax.swing.JFrame implements
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 756, Short.MAX_VALUE)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(btnAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btnAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnEliminar, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblCantidad, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(txtTarge))
+                        .addComponent(btnEliminar, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtTarge)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblCantidad, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lblDirectorio, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGap(33, 33, 33)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(lblDirectorio, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtTarge, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 380, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnAgregar)
-                    .addComponent(btnEliminar)
-                    .addComponent(lblCantidad))
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtTarge, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblCantidad))
+                        .addComponent(btnEliminar, javax.swing.GroupLayout.Alignment.TRAILING))
+                    .addComponent(btnAgregar))
                 .addContainerGap())
         );
 
@@ -325,6 +434,10 @@ public class Vista extends javax.swing.JFrame implements
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
+        this.limpiarTodo();
+    }//GEN-LAST:event_btnEliminarActionPerformed
+
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -358,66 +471,68 @@ public class Vista extends javax.swing.JFrame implements
         });
     }
 
-    private ArchivosVo getArchivo(int x) {
-        x = x + 1;
-        ArchivosVo vo = null;
+    private ArchivoVo getArchivo(int x) {
+
+        ArchivoVo vo = null;
+
+        Collection<ArchivoVo> coll = this.archivosColl;
 
         if (encontradosColl.size() > 0) {
-            for (ArchivosVo vox : encontradosColl) {
+            coll = encontradosColl;
+        }
 
+        if (x <= coll.size()) {
+
+            for (ArchivoVo vox : coll) {
                 if (vox.getId() == x) {
-
                     vo = vox;
                     break;
-
-                }
-            }
-        } else {
-            for (ArchivosVo vox : archivosColl) {
-
-                if (vox.getId() == x) {
-
-                    vo = vox;
-                    break;
-
                 }
             }
         }
-
         return vo;
     }
 
     private void seleccionar() {
         int sel = this.listLista.getSelectedIndex();
         if (sel != -1) {
-            ArchivosVo vo = this.getArchivo(sel);
-            this.lblTitulo.setText(vo.getCompleto().trim());
+            sel++;
+            seleccionado = this.getArchivo(sel);
+            this.lblTitulo.setText(seleccionado.getNombre().trim());
         }
 
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup bgReproduccion;
     private javax.swing.JButton btnAgregar;
+    private javax.swing.JButton btnAnterior;
     private javax.swing.JButton btnEliminar;
     private javax.swing.JButton btnPause;
     private javax.swing.JButton btnPlay;
+    private javax.swing.JButton btnSiguiente;
     private javax.swing.JButton btnStop;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblCantidad;
+    private javax.swing.JLabel lblDirectorio;
     private javax.swing.JLabel lblTiempo;
     private javax.swing.JLabel lblTitulo;
     private javax.swing.JList listLista;
+    private javax.swing.JRadioButton rdoOrdenada;
+    private javax.swing.JRadioButton rdoRandon;
     private javax.swing.JTextField txtTarge;
     // End of variables declaration//GEN-END:variables
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == this.btnPlay) {
-            String archivo = this.lblTitulo.getText().trim();
-            if (!archivo.isEmpty()) {
-                this.reproducir(archivo);
+            if (this.seleccionado != null) {
+                String archivo = this.seleccionado.getCompleto();
+                if (!archivo.isEmpty()) {
+                    this.reproducir(this.seleccionado);
+                }
             }
         }
         if (e.getSource() == this.btnPause) {
@@ -427,10 +542,25 @@ public class Vista extends javax.swing.JFrame implements
         if (e.getSource() == this.btnStop) {
             play = false;
         }
+        if (e.getSource() == this.btnSiguiente) {
+            this.irSiguiente();
+        }
+
+        if (e.getSource() == this.btnAnterior) {
+            this.irAnterior();
+        }
 
         if (e.getSource() == this.btnAgregar) {
             this.selDir();
         }
+    }
+
+    private void limpiarTodo() {
+        this.archivosColl.clear();
+        this.encontradosColl.clear();
+        this.armarLista(archivosColl);
+        this.lblTitulo.setText("Seleccione una música");
+        this.lblTiempo.setText("0");
     }
 
     @Override
@@ -439,8 +569,7 @@ public class Vista extends javax.swing.JFrame implements
             this.seleccionar();
             if (e.getClickCount() == 2) {
                 play = false;
-                String archivo = this.lblTitulo.getText().trim();
-                this.reproducir(archivo);
+                this.reproducir(this.seleccionado);
             }
         }
 

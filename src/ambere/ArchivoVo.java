@@ -1,12 +1,12 @@
-package joeplayer;
+package ambere;
 
-public class ArchivosVo {
+public class ArchivoVo {
     private int id;
     private String nombre;
     private String direccion;
     private String completo;
 
-    public ArchivosVo(int id, String nombre, String direccion, String completo) {
+    public ArchivoVo(int id, String nombre, String direccion, String completo) {
         this.id = id;
         this.nombre = nombre;
         this.direccion = direccion;
