@@ -107,7 +107,9 @@
                               <Component id="btnAnterior" min="-2" pref="50" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="btnSiguiente" min="-2" pref="50" max="-2" attributes="0"/>
-                              <EmptySpace pref="322" max="32767" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Component id="sdrVolumen" max="32767" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="rdoOrdenada" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="rdoRandon" min="-2" max="-2" attributes="0"/>
@@ -136,8 +138,9 @@
                           </Group>
                           <Component id="rdoOrdenada" alignment="0" max="32767" attributes="0"/>
                           <Component id="rdoRandon" alignment="0" max="32767" attributes="0"/>
+                          <Component id="sdrVolumen" max="32767" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="12" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -216,6 +219,14 @@
                 <Property name="toolTipText" type="java.lang.String" value=""/>
               </Properties>
             </Component>
+            <Component class="javax.swing.JSlider" name="sdrVolumen">
+              <Properties>
+                <Property name="majorTickSpacing" type="int" value="10"/>
+                <Property name="minorTickSpacing" type="int" value="10"/>
+                <Property name="toolTipText" type="java.lang.String" value="Volumen"/>
+                <Property name="value" type="int" value="80"/>
+              </Properties>
+            </Component>
           </SubComponents>
         </Container>
         <Container class="javax.swing.JPanel" name="jPanel3">
@@ -242,8 +253,8 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="lblCantidad" min="-2" pref="80" max="-2" attributes="0"/>
                           </Group>
+                          <Component id="jScrollPane1" alignment="0" pref="756" max="32767" attributes="0"/>
                           <Component id="lblDirectorio" alignment="0" max="32767" attributes="0"/>
-                          <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -253,9 +264,9 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="lblDirectorio" max="32767" attributes="0"/>
+                      <Component id="lblDirectorio" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane1" min="-2" pref="380" max="-2" attributes="0"/>
+                      <Component id="jScrollPane1" pref="521" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="103" alignment="0" groupAlignment="0" attributes="0">
@@ -306,9 +317,6 @@
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" value=""/>
               </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnEliminarActionPerformed"/>
-              </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="lblCantidad">
               <Properties>
