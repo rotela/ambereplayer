@@ -4,6 +4,7 @@ import ambere.AmberePlayer;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JRadioButton;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
@@ -24,6 +25,22 @@ public class AmberePlayerVista extends javax.swing.JFrame {
         this.listLista.addMouseListener(oye);
         this.txtTarge.addKeyListener(oye);
         this.sdrVolumen.addChangeListener(oye);
+        
+        this.mItemAddArchivo.addActionListener(oye);
+        this.mItemAddDirectorio.addActionListener(oye);
+        this.mItemSalir.addActionListener(oye);
+    }
+
+    public JMenuItem getmItemAddArchivo() {
+        return mItemAddArchivo;
+    }
+
+    public JMenuItem getmItemAddDirectorio() {
+        return mItemAddDirectorio;
+    }
+
+    public JMenuItem getmItemSalir() {
+        return mItemSalir;
     }
 
     public JButton getBtnAgregar() {
@@ -115,6 +132,17 @@ public class AmberePlayerVista extends javax.swing.JFrame {
         lblCantidad = new javax.swing.JLabel();
         txtTarge = new javax.swing.JTextField();
         lblDirectorio = new javax.swing.JLabel();
+        menubar = new javax.swing.JMenuBar();
+        mPrincipal = new javax.swing.JMenu();
+        mItemAddArchivo = new javax.swing.JMenuItem();
+        mItemAddDirectorio = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
+        mItemSalir = new javax.swing.JMenuItem();
+        mReproduccion = new javax.swing.JMenu();
+        jMenuItem1 = new javax.swing.JMenuItem();
+        jMenuItem2 = new javax.swing.JMenuItem();
+        jMenuItem3 = new javax.swing.JMenuItem();
+        mAcerca = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Amberé Player");
@@ -244,7 +272,7 @@ public class AmberePlayerVista extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblDirectorio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 521, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -260,9 +288,9 @@ public class AmberePlayerVista extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -277,6 +305,44 @@ public class AmberePlayerVista extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
+        mPrincipal.setMnemonic('p');
+        mPrincipal.setText("Principal");
+
+        mItemAddArchivo.setMnemonic('a');
+        mItemAddArchivo.setText("Añadir Archivo");
+        mPrincipal.add(mItemAddArchivo);
+
+        mItemAddDirectorio.setMnemonic('d');
+        mItemAddDirectorio.setText("Añadir Directorio");
+        mPrincipal.add(mItemAddDirectorio);
+        mPrincipal.add(jSeparator1);
+
+        mItemSalir.setMnemonic('s');
+        mItemSalir.setText("Salir");
+        mPrincipal.add(mItemSalir);
+
+        menubar.add(mPrincipal);
+
+        mReproduccion.setText("Reproducción");
+
+        jMenuItem1.setText("jMenuItem1");
+        mReproduccion.add(jMenuItem1);
+
+        jMenuItem2.setText("jMenuItem2");
+        mReproduccion.add(jMenuItem2);
+
+        jMenuItem3.setText("jMenuItem3");
+        mReproduccion.add(jMenuItem3);
+
+        menubar.add(mReproduccion);
+
+        mAcerca.setMnemonic('a');
+        mAcerca.setText("Acerca");
+        mAcerca.setToolTipText("");
+        menubar.add(mAcerca);
+
+        setJMenuBar(menubar);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -288,7 +354,7 @@ public class AmberePlayerVista extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
@@ -325,15 +391,26 @@ public class AmberePlayerVista extends javax.swing.JFrame {
     private javax.swing.JButton btnPlay;
     private javax.swing.JButton btnSiguiente;
     private javax.swing.JButton btnStop;
+    private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JLabel lblCantidad;
     private javax.swing.JLabel lblDirectorio;
     private javax.swing.JLabel lblTiempo;
     private javax.swing.JLabel lblTitulo;
     private javax.swing.JList listLista;
+    private javax.swing.JMenu mAcerca;
+    private javax.swing.JMenuItem mItemAddArchivo;
+    private javax.swing.JMenuItem mItemAddDirectorio;
+    private javax.swing.JMenuItem mItemSalir;
+    private javax.swing.JMenu mPrincipal;
+    private javax.swing.JMenu mReproduccion;
+    private javax.swing.JMenuBar menubar;
     private javax.swing.JRadioButton rdoOrdenada;
     private javax.swing.JRadioButton rdoRandon;
     private javax.swing.JSlider sdrVolumen;

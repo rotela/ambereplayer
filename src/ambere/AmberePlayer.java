@@ -34,7 +34,6 @@ public class AmberePlayer implements
     public BasicPlayer player;
     public BasicController control;
     static boolean pausa = false;
-    static boolean play = false;
     static int cant = 0;
     private final Collection<ArchivoVo> archivosColl;
     private final Collection<ArchivoVo> encontradosColl;
@@ -44,7 +43,8 @@ public class AmberePlayer implements
     private double volumen;
     private boolean reproduciendo;
 
-    private int h=0, m=0, s=0;
+    private int h = 0, m = 0, s = 0;
+    private long p = 0;
 
     public AmberePlayer() {
 
@@ -68,15 +68,17 @@ public class AmberePlayer implements
 
     public void reproducir(ArchivoVo vo) {
         if (vo != null) {
+
             this.vista.getLblTitulo().setText(vo.getId() + "- " + vo.getNombre());
+
             try {
                 this.reproduciendo = true;
                 this.control.open(new File(vo.getCompleto()));
                 this.control.play();
                 this.control.setGain(this.volumen);
-                this.control.setPan(0.0);                
+                this.control.setPan(0.0);
             } catch (BasicPlayerException ex) {
-                System.out.println(ex.getMessage());
+                display(ex.getMessage());
             }
         }
     }
@@ -123,15 +125,17 @@ public class AmberePlayer implements
     }
 
     public void parar() {
+        if (this.reproduciendo) {
+            try {
 
-        try {
-            this.control.stop();
-            this.reproduciendo = false;
-            
-            System.out.println("Status: "+this.player.getStatus());
-        } catch (BasicPlayerException ex) {
-            System.out.println(ex.getMessage());
+                this.control.stop();
+                this.reproduciendo = false;
+
+            } catch (BasicPlayerException ex) {
+                System.out.println(ex.getMessage());
+            }
         }
+
     }
 
     private int getRandon() {
@@ -143,9 +147,7 @@ public class AmberePlayer implements
 
         Random rand = new Random();
 
-        int randomNum = rand.nextInt((max - min) + 1) + min;
-
-        return randomNum;
+        return rand.nextInt((max - min) + 1) + min;
     }
 
     private void buscar() {
@@ -158,7 +160,7 @@ public class AmberePlayer implements
         } else {
             for (ArchivoVo vox : archivosColl) {
 
-                if (vox.getNombre().toLowerCase().contains(targe)) {
+                if (vox.getCompleto().toLowerCase().contains(targe)) {
                     x++;
                     this.encontradosColl.add(new ArchivoVo(
                             x,
@@ -174,9 +176,10 @@ public class AmberePlayer implements
     }
 
     private void selDir() {
+        this.limpiarTodo();
         cant = 0;
-        DefaultListModel dlm = new DefaultListModel();
-        this.vista.getListLista().setModel(dlm);
+//        DefaultListModel dlm = new DefaultListModel();
+//        this.vista.getListLista().setModel(dlm);
         String archivo = "", archivoFull = "";
         JFileChooser c = new JFileChooser(".");
         c.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -259,7 +262,10 @@ public class AmberePlayer implements
         int sel = this.vista.getListLista().getSelectedIndex();
         if (sel != -1) {
             sel++;
-            seleccionado = this.getArchivo(sel);
+
+            this.seleccionado = this.getArchivo(sel);
+
+            this.vista.getLblDirectorio().setText(this.seleccionado.getNombre());
         }
 
     }
@@ -271,12 +277,14 @@ public class AmberePlayer implements
     }
 
     private void getTiempo(long micro) {
-        long seg = (int) (micro / 1000000);
-        long min = (int) (micro / 60000000);
-        long hor = (int) (micro / (60000000*60));
-        
-        
-        this.vista.getLblTiempo().setText(hor+":"+min+":"+seg);
+
+        long seconds = (long) (micro / 1000000);
+
+        s = (int) seconds % 60;
+        m = (int) (seconds / 60) % 60;
+        h = (int) (seconds / (60 * 60)) % 24;
+
+        this.vista.getLblTiempo().setText(String.format("%02d:%02d:%02d", h, m, s));
     }
 
     @Override
@@ -289,14 +297,15 @@ public class AmberePlayer implements
         if (map.get("mp3.position.microseconds") != null) {
             long micro = (long) map.get("mp3.position.microseconds");
             this.getTiempo(micro);
-        }        
+        }
     }
 
     @Override
     public void stateUpdated(BasicPlayerEvent bpe) {
-        if (bpe.toString().trim().equals("STOPPED:-1")) {
-            this.irSiguiente();
-        }
+
+//        if (bpe.toString().trim().equals("STOPPED:-1")) {
+//            this.irSiguiente();
+//        }
         display("estado actualizado: " + bpe.toString());
     }
 
@@ -344,6 +353,11 @@ public class AmberePlayer implements
         if (e.getSource() == this.vista.getBtnEliminar()) {
             this.limpiarTodo();
         }
+        // SALIR
+        if (e.getSource() == this.vista.getmItemSalir()) {
+            System.exit(0);
+        }
+
     }
 
     @Override
@@ -351,7 +365,6 @@ public class AmberePlayer implements
         if (e.getSource() == this.vista.getListLista()) {
             this.seleccionar();
             if (e.getClickCount() == 2) {
-                play = false;
                 this.reproducir(this.seleccionado);
             }
         }
